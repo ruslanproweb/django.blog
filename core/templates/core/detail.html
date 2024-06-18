@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load custom_tags %}
+
+{% block title %}
+Дательная: {{ article.title }}
+{% endblock %}
+
+{% block content %}
+
+{% is_vote_exists request article 'likes' as is_liked %}
+{% is_vote_exists request article 'dislikes' as is_disliked %}
+
+<div class="card">
+    {% if article.image %}
+    <img src="{{ article.image.url }}" class="card-img-top" alt="...">
+    {% endif %}
+    <div class="card-body">
+        <h5 class="card-title">{{ article.title }}</h5>
+        <p class="card-text">{{ article.full_description }}</p>
+    </div>
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+            <b>Просмотры: </b> {{ article.views }}
+        </li>
+        <li class="list-group-item">
+            <b>Категория: </b>{{ article.category }}
+        </li>
+        <li class="list-group-item">
+            <b>Автор: </b>{{ article.author }}
+        </li>
+        <li class="list-group-item">
+            <b>Создано: </b>{{ article.created_at }}
+        </li>
+    </ul>
+    <div class="card-footer d-flex justify-content-between">
+        {% if request.user.is_authenticated %}
+        <div class="d-flex column-gap-3">
+            <a href="{% url 'add_vote' obj_type='article' obj_id=article.pk action='add_like' %}"
+               class="btn btn-success">
+                {% if not is_liked %}
+                <i class="bi bi-hand-thumbs-up"></i>
+                {% else %}
+                <i class="bi bi-hand-thumbs-up-fill"></i>
+                {% endif %}
+
+                {{ total_likes }}
+            </a>
+            <a href="{% url 'add_vote' obj_type='article' obj_id=article.pk action='add_dislike' %}"
+               class="btn btn-danger">
+                {% if not disliked %}
+                <i class="bi bi-hand-thumbs-down"></i>
+                {% else %}
+                <i class="bi bi-hand-thumbs-down-fill"></i>
+                {% endif %}
+                {{ total_dislikes }}
+            </a>
+        </div>
+        {% endif %}
+        {% if request.user == article.author %}
+        <div class="d-flex column-gap-3">
+            <a href="{% url 'update' article.pk %}" class="btn btn-warning">Изменить</a>
+            <a href="{% url 'delete' article.pk %}" class="btn btn-danger">Удалить</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<div class="comments-block">
+    <h2 class="text-center my-5">Комментарии</h2>
+
+    <div class="row row-gap-3">
+        {% for comment in comments %}
+        {% is_vote_exists request comment 'likes' as is_comment_liked %}
+        {% is_vote_exists request comment 'dislikes' as is_comment_disliked %}
+        <div class="col-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title d-flex align-items-center justify-content-between">
+                        {{ comment.author }}
+                        {% if request.user.is_authenticated %}
+                        <div class="d-flex column-gap-2">
+                            <a href="{% url 'add_vote' obj_type='comment' obj_id=comment.pk action='add_like' %}" class="btn btn-success">
+                                {% if not is_comment_liked %}
+                                <i class="bi bi-hand-thumbs-up"></i>
+                                {% else %}
+                                <i class="bi bi-hand-thumbs-up-fill"></i>
+                                {% endif %}
+
+                                {% for key, value in total_comments_likes.items %}
+                                {% if key == comment.pk %}
+                                {{ value }}
+                                {% endif %}
+                                {% endfor %}
+                            </a>
+                            <a href="{% url 'add_vote' obj_type='comment' obj_id=comment.pk action='add_dislike' %}" class="btn btn-danger">
+                                {% if not is_comment_disliked %}
+                                <i class="bi bi-hand-thumbs-down"></i>
+                                {% else %}
+                                <i class="bi bi-hand-thumbs-down-fill"></i>
+                                {% endif %}
+                                {% for key, value in total_comments_dislikes.items %}
+                                {% if key == comment.pk %}
+                                {{ value }}
+                                {% endif %}
+                                {% endfor %}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-body-secondary">{{ comment.created_at }}</h6>
+                    <p class="card-text">{{ comment.text }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if request.user.is_authenticated %}
+    <form action="" method="post" class="mt-5">
+        {% csrf_token %}
+        {{ form }}
+        <button class="btn btn-dark mt-3">Отправить</button>
+    </form>
+    {% else %}
+    <p>Только авторизованные пользователи, могут оставлять комментарии <a href="">Войти</a></p>
+    {% endif %}
+</div>
+{% endblock %}
