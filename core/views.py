@@ -39,6 +39,13 @@ class SearchResults(HomeView):
         print(filtered)
         return filtered
 
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data()
+        qs = get_updated_time(self.get_queryset())
+        context['articles'] = qs
+        return context
+
 # DetailView
 
 
